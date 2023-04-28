@@ -38,14 +38,11 @@
   "homepage": "https://docs.expo.io/guides/using-sentry/",
   "dependencies": {
     "@expo/spawn-async": "^1.7.0",
-    "@sentry/integrations": "7.29.0",
-    "@sentry/react": "7.29.0",
-    "@sentry/react-native": "4.13.0",
-    "@sentry/types": "7.29.0",
     "mkdirp": "^1.0.4",
     "rimraf": "^3.0.2"
   },
   "peerDependencies": {
+    "@sentry/react-native": "5.4.0",
     "expo": ">=47.0.0",
     "expo-application": "*",
     "expo-constants": "*",
@@ -54,6 +51,7 @@
   },
   "devDependencies": {
     "@expo/config-types": "^47.0.0",
+    "@sentry/react-native": "5.4.0",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^14.0.1",
     "@types/react-native": "^0.70.5",
