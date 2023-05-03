@@ -25,7 +25,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.init = exports.Native = void 0;
 const react_native_1 = require("react-native");
-const Updates = __importStar(require("expo-updates"));
 const expo_constants_1 = __importStar(require("expo-constants"));
 const Application = __importStar(require("expo-application"));
 const integrations_1 = require("@sentry/integrations");
@@ -34,26 +33,12 @@ const managed_1 = require("./integrations/managed");
 const utils_1 = require("./utils");
 const react_native_2 = require("@sentry/react-native");
 exports.Native = __importStar(require("@sentry/react-native"));
-const MANIFEST = Updates.manifest;
 const IS_BARE_WORKFLOW = expo_constants_1.default.executionEnvironment === expo_constants_1.ExecutionEnvironment.Bare;
 const DEFAULT_OPTIONS = {
     enableNativeNagger: false,
     release: getDefaultRelease(),
-    dist: getDist(),
     ...(IS_BARE_WORKFLOW ? {} : { enableNative: false, enableNativeCrashHandling: false }),
 };
-/**
- * For embedded updates, the dist version needs to match what is set by the Sentry build script.
- * For modern manifest OTA updates, the updateId is used.
- */
-function getDist() {
-    if (Updates.isEmbeddedLaunch) {
-        return MANIFEST.revisionId ? MANIFEST.version : `${Application.nativeBuildVersion}`;
-    }
-    else {
-        return Updates.updateId;
-    }
-}
 /**
  * We assign the appropriate release based on if the app is running in development,
  * on an Classic OTA Update, or on a no-publish build.
@@ -61,10 +46,6 @@ function getDist() {
 function getDefaultRelease() {
     if (__DEV__) {
         return 'DEVELOPMENT';
-    }
-    else if (MANIFEST.revisionId) {
-        // Want to make sure this still exists in EAS update: equal on iOS & Android
-        return MANIFEST.revisionId;
     }
     else {
         // This is the default set by Sentry's native Xcode & Gradle scripts

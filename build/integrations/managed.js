@@ -30,33 +30,12 @@ exports.ExpoManagedIntegration = void 0;
 const react_native_1 = require("react-native");
 const expo_constants_1 = __importDefault(require("expo-constants"));
 const Device = __importStar(require("expo-device"));
-const Updates = __importStar(require("expo-updates"));
 const react_native_2 = require("@sentry/react-native");
-const DEFAULT_TAGS = [
-    {
-        tagName: 'expoReleaseChannel',
-        manifestName: 'releaseChannel',
-    },
-    {
-        tagName: 'appVersion',
-        manifestName: 'version',
-    },
-    {
-        tagName: 'appPublishedTime',
-        manifestName: 'publishedTime',
-    },
-    {
-        tagName: 'expoSdkVersion',
-        manifestName: 'sdkVersion',
-    },
-];
 class ExpoManagedIntegration {
     static id = 'ExpoManagedIntegration';
     name = ExpoManagedIntegration.id;
     setupOnce() {
-        const manifest = Updates.manifest;
         (0, react_native_2.setExtras)({
-            manifest,
             deviceYearClass: Device.deviceYearClass,
             linkingUri: expo_constants_1.default.linkingUri,
         });
@@ -66,16 +45,6 @@ class ExpoManagedIntegration {
         });
         if (expo_constants_1.default.appOwnership === 'expo' && expo_constants_1.default.expoVersion) {
             (0, react_native_2.setTag)('expoAppVersion', expo_constants_1.default.expoVersion);
-        }
-        if (typeof manifest === 'object') {
-            DEFAULT_TAGS.forEach((tag) => {
-                if (manifest.hasOwnProperty(tag.manifestName)) {
-                    (0, react_native_2.setTag)(tag.tagName, manifest[tag.manifestName]);
-                }
-            });
-        }
-        if (Updates?.channel) {
-            (0, react_native_2.setTag)('expoChannel', Updates.channel);
         }
         const defaultHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler((error, isFatal) => {

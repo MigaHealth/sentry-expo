@@ -30,46 +30,18 @@ exports.ExpoBareIntegration = void 0;
 const react_native_1 = require("react-native");
 const expo_constants_1 = __importDefault(require("expo-constants"));
 const Device = __importStar(require("expo-device"));
-const Updates = __importStar(require("expo-updates"));
 const react_native_2 = require("@sentry/react-native");
-const DEFAULT_TAGS = [
-    {
-        tagName: 'expoReleaseChannel',
-        manifestName: 'releaseChannel',
-    },
-    {
-        tagName: 'appVersion',
-        manifestName: 'version',
-    },
-    {
-        tagName: 'appPublishedTime',
-        manifestName: 'publishedTime',
-    },
-    {
-        tagName: 'expoSdkVersion',
-        manifestName: 'sdkVersion',
-    },
-];
 class ExpoBareIntegration {
     static id = 'ExpoBareIntegration';
     name = ExpoBareIntegration.id;
     setupOnce() {
-        const manifest = Updates.manifest;
         (0, react_native_2.setExtras)({
-            manifest,
             deviceYearClass: Device.deviceYearClass,
             linkingUri: expo_constants_1.default.linkingUri,
         });
         (0, react_native_2.setTags)({
             deviceId: expo_constants_1.default.sessionId,
         });
-        if (typeof manifest === 'object') {
-            DEFAULT_TAGS.forEach((tag) => {
-                if (manifest.hasOwnProperty(tag.manifestName)) {
-                    (0, react_native_2.setTag)(tag.tagName, manifest[tag.manifestName]);
-                }
-            });
-        }
         const defaultHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler((error, isFatal) => {
             // Updates bundle names are not predictable in advance, so we replace them with the names

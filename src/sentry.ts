@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import * as Updates from 'expo-updates';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Application from 'expo-application';
 import { RewriteFrames } from '@sentry/integrations';
@@ -14,27 +13,13 @@ import { AppManifest } from 'expo-constants/build/Constants.types';
 
 export * as Native from '@sentry/react-native';
 
-const MANIFEST = Updates.manifest as AppManifest;
 const IS_BARE_WORKFLOW = Constants.executionEnvironment === ExecutionEnvironment.Bare;
 
 const DEFAULT_OPTIONS = {
   enableNativeNagger: false, // Otherwise this will trigger an Alert(), let's rely on the logs instead
   release: getDefaultRelease(),
-  dist: getDist(),
   ...(IS_BARE_WORKFLOW ? {} : { enableNative: false, enableNativeCrashHandling: false }),
 };
-
-/**
- * For embedded updates, the dist version needs to match what is set by the Sentry build script.
- * For modern manifest OTA updates, the updateId is used.
- */
-function getDist(): string | null | undefined {
-  if (Updates.isEmbeddedLaunch) {
-    return MANIFEST.revisionId ? MANIFEST.version : `${Application.nativeBuildVersion}`;
-  } else {
-    return Updates.updateId;
-  }
-}
 
 /**
  * We assign the appropriate release based on if the app is running in development,
@@ -43,9 +28,6 @@ function getDist(): string | null | undefined {
 function getDefaultRelease(): string {
   if (__DEV__) {
     return 'DEVELOPMENT';
-  } else if (MANIFEST.revisionId) {
-    // Want to make sure this still exists in EAS update: equal on iOS & Android
-    return MANIFEST.revisionId;
   } else {
     // This is the default set by Sentry's native Xcode & Gradle scripts
     return `${Application.applicationId}@${Application.nativeApplicationVersion}+${Application.nativeBuildVersion}`;
