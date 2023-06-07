@@ -1,44 +1,20 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Updates from 'expo-updates';
 import {
   setExtras,
   setTags,
   getCurrentHub,
-  setTag,
   addGlobalEventProcessor,
 } from '@sentry/react-native';
 import { SeverityLevel } from '@sentry/types';
-
-const DEFAULT_TAGS = [
-  {
-    tagName: 'expoReleaseChannel',
-    manifestName: 'releaseChannel',
-  },
-  {
-    tagName: 'appVersion',
-    manifestName: 'version',
-  },
-  {
-    tagName: 'appPublishedTime',
-    manifestName: 'publishedTime',
-  },
-  {
-    tagName: 'expoSdkVersion',
-    manifestName: 'sdkVersion',
-  },
-];
 
 export class ExpoBareIntegration {
   static id = 'ExpoBareIntegration';
   name = ExpoBareIntegration.id;
 
   setupOnce() {
-    const manifest = Updates.manifest as any;
-
     setExtras({
-      manifest,
       deviceYearClass: Device.deviceYearClass,
       linkingUri: Constants.linkingUri,
     });
@@ -46,14 +22,6 @@ export class ExpoBareIntegration {
     setTags({
       deviceId: Constants.sessionId,
     });
-
-    if (typeof manifest === 'object') {
-      DEFAULT_TAGS.forEach((tag) => {
-        if (manifest.hasOwnProperty(tag.manifestName)) {
-          setTag(tag.tagName, manifest[tag.manifestName]);
-        }
-      });
-    }
 
     const defaultHandler = ErrorUtils.getGlobalHandler();
 

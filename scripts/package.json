@@ -27,6 +27,7 @@
     "@types/dateformat": "3.0.1",
     "@types/fs-extra": "9.0.13",
     "@types/lodash-es": "4.17.6",
+    "@types/marked": "^3.0.3",
     "@types/node": "18.0.4",
     "@types/semver": "7.3.10",
     "ts-node": "10.9.1",

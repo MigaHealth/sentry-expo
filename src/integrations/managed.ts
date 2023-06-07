@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Updates from 'expo-updates';
 import {
   setExtras,
   setTags,
@@ -35,10 +34,7 @@ export class ExpoManagedIntegration {
   name = ExpoManagedIntegration.id;
 
   setupOnce() {
-    const manifest = Updates.manifest as any;
-
     setExtras({
-      manifest,
       deviceYearClass: Device.deviceYearClass,
       linkingUri: Constants.linkingUri,
     });
@@ -50,18 +46,6 @@ export class ExpoManagedIntegration {
 
     if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
       setTag('expoAppVersion', Constants.expoVersion);
-    }
-
-    if (typeof manifest === 'object') {
-      DEFAULT_TAGS.forEach((tag) => {
-        if (manifest.hasOwnProperty(tag.manifestName)) {
-          setTag(tag.tagName, manifest[tag.manifestName]);
-        }
-      });
-    }
-
-    if (Updates?.channel) {
-      setTag('expoChannel', Updates.channel);
     }
 
     const defaultHandler = ErrorUtils.getGlobalHandler();

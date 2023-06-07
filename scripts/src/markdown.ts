@@ -62,7 +62,7 @@ export type Token =
   | BlockquoteToken;
 
 export interface Tokens extends Array<Token> {
-  links?: any;
+  links?: marked.TokensList['links'];
 }
 
 export interface Renderer {
@@ -73,7 +73,7 @@ export interface Renderer {
  * Receives markdown text and returns an array of tokens.
  */
 export function lexify(text: string): Tokens {
-  const tokens = marked.lexer(text);
+  const tokens = marked.lexer(text) as Tokens;
   recursivelyFixTokens(tokens);
   return tokens;
 }
