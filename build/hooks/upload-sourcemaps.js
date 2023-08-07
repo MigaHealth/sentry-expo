@@ -3,17 +3,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const spawn_async_1 = __importDefault(require("@expo/spawn-async"));
-const path_1 = __importDefault(require("path"));
-const rimraf_1 = __importDefault(require("rimraf"));
-const mkdirp_1 = __importDefault(require("mkdirp"));
 const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const spawn_async_1 = __importDefault(require("@expo/spawn-async"));
+const rimraf_1 = require("rimraf");
+const mkdirp_1 = require("mkdirp");
 const cli_1 = __importDefault(require("@sentry/cli"));
 module.exports = async (options) => {
     let { config, log, iosBundle, iosSourceMap, iosManifest, androidBundle, androidSourceMap, projectRoot, } = options;
     const tmpdir = path_1.default.resolve(projectRoot, '.tmp', 'sentry');
-    rimraf_1.default.sync(tmpdir);
-    mkdirp_1.default.sync(tmpdir);
+    rimraf_1.rimraf.sync(tmpdir);
+    mkdirp_1.mkdirp.sync(tmpdir);
     try {
         // We use the same filenames for sourcemaps as Sentry does (even though the naming is unfortunate)
         fs_1.default.writeFileSync(tmpdir + '/main.jsbundle', iosBundle, 'utf-8');
@@ -37,7 +37,7 @@ module.exports = async (options) => {
         log(`Verify that your Sentry configuration in app.json is correct and refer to https://docs.expo.io/versions/latest/guides/using-sentry.html`);
     }
     finally {
-        rimraf_1.default.sync(tmpdir);
+        rimraf_1.rimraf.sync(tmpdir);
     }
 };
 function getUploadOptions(config, env, manifest) {

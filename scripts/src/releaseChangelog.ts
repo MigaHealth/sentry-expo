@@ -5,13 +5,14 @@ import { CATEGORY_HEADERS } from './changelog/consts.js';
 import { readAndParseChangelogAsync, writeChangelogAsync } from './changelog/file.js';
 import * as markdown from './markdown.js';
 
+
 const MAIN_CATEGORIES = Object.values(CATEGORY_HEADERS).map(text =>
   markdown.createHeadingToken(text, 3)
 );
 const FORMAT_RELEASE_HEADING = (version: string): markdown.Token =>
   markdown.createHeadingToken(
-    `[${version}](https://github.com/expo/sentry-expo/releases/tag/v${version}) - ${dateFormat(
-      'isoDate'
+    `[${version}](https://github.com/expo/sentry-expo/releases/tag/v${version}) - ${dateFormat.default(
+      dateFormat.masks.isoDate
     )}`,
     2
   );
@@ -32,7 +33,7 @@ const FORMAT_RELEASE_HEADING = (version: string): markdown.Token =>
   process.exit(1);
 });
 
-function removeEmptyCategories(tokens: markdown.Tokens): void {
+function removeEmptyCategories(tokens: markdown.TokensList): void {
   const idxToRemove: number[] = [];
 
   let i = 0;
@@ -40,7 +41,7 @@ function removeEmptyCategories(tokens: markdown.Tokens): void {
     // find index of the category
     while (true) {
       const token = tokens[i];
-      if (token.type === markdown.TokenType.HEADING && token.depth === 3) {
+      if (token.type === 'heading' && token.depth === 3) {
         break;
       } else {
         i++;
@@ -48,7 +49,7 @@ function removeEmptyCategories(tokens: markdown.Tokens): void {
     }
 
     // i points at the category heading
-    if (tokens[i + 1].type === markdown.TokenType.HEADING) {
+    if (tokens[i + 1].type === 'heading') {
       // the category is empty
       idxToRemove.push(i);
     }
@@ -62,11 +63,11 @@ function removeEmptyCategories(tokens: markdown.Tokens): void {
   }
 }
 
-function insertNewEmptyCategoriesAndReleaseHeading(tokens: markdown.Tokens, version: string): void {
+function insertNewEmptyCategoriesAndReleaseHeading(tokens: markdown.TokensList, version: string): void {
   let i = 0;
   while (true) {
     const token = tokens[i++];
-    if (token.type === markdown.TokenType.HEADING && token.text.trim() === 'main') {
+    if (token.type === 'heading' && token.text.trim() === 'main') {
       break;
     }
   }
@@ -76,13 +77,13 @@ function insertNewEmptyCategoriesAndReleaseHeading(tokens: markdown.Tokens, vers
   tokens.splice(i, 0, ...MAIN_CATEGORIES, releaseHeading);
 }
 
-function findAndPrintCurrentReleaseChangelog(tokens: markdown.Tokens, version: string): void {
+function findAndPrintCurrentReleaseChangelog(tokens: markdown.TokensList, version: string): void {
   const startIdx = tokens.findIndex(
     token =>
-      token.type === markdown.TokenType.HEADING && token.depth === 2 && token.text.trim() !== 'main'
+      token.type === 'heading' && token.depth === 2 && token.text.trim() !== 'main'
   );
   const endIdx = tokens.findIndex(
-    (token, idx) => idx > startIdx && token.type === markdown.TokenType.HEADING && token.depth === 2
+    (token, idx) => idx > startIdx && token.type === 'heading' && token.depth === 2
   );
   const currentReleaseTokens = tokens.slice(startIdx + 1, endIdx);
   const rendered = markdown.render(currentReleaseTokens);

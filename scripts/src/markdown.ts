@@ -1,53 +1,51 @@
 // this is mostly copy-pasted from https://github.com/expo/expo/blob/master/tools/src/Markdown.ts
 
 import { unescape } from 'lodash-es';
-import marked from 'marked';
+import { Tokens, marked } from 'marked';
 
-export enum TokenType {
-  HEADING = 'heading',
-  LIST = 'list',
-  LIST_ITEM = 'listItem',
-  PARAGRAPH = 'paragraph',
-  TEXT = 'text',
-  BLOCKQUOTE = 'blockquote',
-  SPACE = 'space',
-  CODE = 'code',
+type TokenType = Token['type'];
+
+type SimpleToken<Type> = { type: Type; raw: string };
+
+export type TextToken = Omit<Tokens.Text, 'raw' | 'tokens'> & {
+  raw?: string;
+  tokens?: Token[];
 }
 
-type SimpleToken<Type> = { type: Type; raw?: string };
-
-export type TextToken<Type = TokenType.TEXT> = SimpleToken<Type> & { text: string };
-
-export type HeadingToken = TextToken<TokenType.HEADING> & {
-  depth: number;
+export type HeadingToken = Omit<Tokens.Heading, 'raw' | 'tokens'> & {
+  raw?: string;
   tokens: Token[];
 };
 
-export type ListToken = SimpleToken<TokenType.LIST> & {
-  depth: number;
-  items: ListItemToken[];
-  ordered?: boolean;
+export type ListToken = Omit<Tokens.List, 'raw' | 'items' | 'start' | 'loose'> & {
+  raw?: string;
   start?: string;
-  loose?: boolean;
-};
-
-export type ListItemToken = TextToken<TokenType.LIST_ITEM> & {
+  items: ListItemToken[];
   depth: number;
-  tokens: Token[];
-  task?: boolean;
-  checked?: boolean;
-  loose?: boolean;
 };
 
-export type ParagraphToken = TextToken<TokenType.PARAGRAPH>;
+export type ListItemToken = Omit<Tokens.ListItem, 'raw' | 'tokens' | 'loose'> & {
+  raw?: string;
+  tokens: Token[];
+  depth: number;
+};
 
-export type SpaceToken = SimpleToken<TokenType.SPACE>;
+export type ParagraphToken = Omit<Tokens.Paragraph, 'raw' | 'tokens'> & {
+  raw?: string;
+  tokens: Token[];
+}
 
-export type CodeToken = TextToken<TokenType.CODE> & {
+export type SpaceToken = Omit<Tokens.Space, 'raw'> & {
+  raw?: string;
+}
+
+export type CodeToken = Omit<Tokens.Code, 'raw' | 'lang'> & {
+  raw?: string;
   lang: string;
 };
 
-export type BlockquoteToken = TextToken<TokenType.BLOCKQUOTE> & {
+export type BlockquoteToken = Omit<Tokens.Blockquote, 'raw' | 'tokens'> & {
+  raw?: string;
   tokens: Token[];
 };
 
@@ -61,9 +59,11 @@ export type Token =
   | CodeToken
   | BlockquoteToken;
 
-export interface Tokens extends Array<Token> {
-  links?: any;
-}
+type Links = Record<string, Pick<Tokens.Link | Tokens.Image, 'href' | 'title'>>;
+
+export type TokensList = Token[] & {
+  links?: Links;
+};
 
 export interface Renderer {
   render(tokens: Token[]): string;
@@ -72,8 +72,8 @@ export interface Renderer {
 /**
  * Receives markdown text and returns an array of tokens.
  */
-export function lexify(text: string): Tokens {
-  const tokens = marked.lexer(text);
+export function lexify(text: string): TokensList {
+  const tokens = marked.lexer(text) as TokensList;
   recursivelyFixTokens(tokens);
   return tokens;
 }
@@ -81,7 +81,7 @@ export function lexify(text: string): Tokens {
 /**
  * Receives an array of tokens and renders them to markdown.
  */
-export function render(tokens: Tokens, renderer: Renderer = new MarkdownRenderer()): string {
+export function render(tokens: TokensList, renderer: Renderer = new MarkdownRenderer()): string {
   // `marked` module is good enough in terms of lexifying, but its main purpose is to
   // convert markdown to html, so we need to write our own renderer for changelogs.
   return unescape(renderer.render(tokens).trim() + EOL);
@@ -92,7 +92,7 @@ export function render(tokens: Tokens, renderer: Renderer = new MarkdownRenderer
  */
 export function createHeadingToken(text: string, depth: number = 1): HeadingToken {
   return {
-    type: TokenType.HEADING,
+    type: 'heading',
     depth,
     text,
     tokens: [createTextToken(text)],
@@ -104,31 +104,33 @@ export function createHeadingToken(text: string, depth: number = 1): HeadingToke
  */
 export function createTextToken(text: string): TextToken {
   return {
-    type: TokenType.TEXT,
+    type: 'text',
     text,
   };
 }
 
 export function createListToken(depth: number = 1): ListToken {
   return {
-    type: TokenType.LIST,
+    type: 'list',
     depth,
+    ordered: false,
     items: [],
   };
 }
 
 export function createListItemToken(text: string, depth: number = 0): ListItemToken {
   return {
-    type: TokenType.LIST_ITEM,
+    type: 'list_item',
     depth,
     text,
     tokens: [createTextToken(text)],
+    task: false,
   };
 }
 
 export function createSpaceToken(text: string): SpaceToken {
   return {
-    type: TokenType.SPACE,
+    type: 'space',
     raw: text,
   };
 }
@@ -137,28 +139,28 @@ export function createSpaceToken(text: string): SpaceToken {
  * Type guard for tokens extending TextToken.
  */
 export function isTextToken(token: Token): token is TextToken {
-  return token?.type === TokenType.TEXT;
+  return token?.type === 'text';
 }
 
 /**
  * Type guard for HeadingToken type.
  */
 export function isHeadingToken(token: Token): token is HeadingToken {
-  return token?.type === TokenType.HEADING;
+  return token?.type === 'heading';
 }
 
 /**
  * Type guard for ListToken type.
  */
 export function isListToken(token: Token): token is ListToken {
-  return token?.type === TokenType.LIST;
+  return token?.type === 'list';
 }
 
 /**
  * Type guard for ListItemToken type.
  */
 export function isListItemToken(token: Token): token is ListItemToken {
-  return token?.type === TokenType.LIST_ITEM;
+  return token?.type === 'list_item';
 }
 
 /**
@@ -175,13 +177,13 @@ export function indentMultilineString(
 /**
  * Fixes given tokens in place. We need to know depth of the list
  */
-function recursivelyFixTokens(tokens: Token[], listDepth: number = 0): void {
+function recursivelyFixTokens(tokens: TokensList, listDepth: number = 0): void {
   for (const token of tokens) {
-    if (token.type === TokenType.LIST) {
+    if (token.type === 'list') {
       token.depth = listDepth;
 
       for (const item of token.items) {
-        item.type = TokenType.LIST_ITEM;
+        item.type = 'list_item';
         item.depth = listDepth;
         recursivelyFixTokens(item.tokens, listDepth + 1);
       }
@@ -210,21 +212,21 @@ export class MarkdownRenderer implements Renderer {
 
   renderToken(token: Token, ctx: RenderingContext): string {
     switch (token.type) {
-      case TokenType.HEADING:
+      case 'heading':
         return this.heading(token);
-      case TokenType.LIST:
+      case 'list':
         return this.list(token, ctx);
-      case TokenType.LIST_ITEM:
+      case 'list_item':
         return this.listItem(token, ctx);
-      case TokenType.PARAGRAPH:
+      case 'paragraph':
         return this.paragraph(token, ctx);
-      case TokenType.TEXT:
+      case 'text':
         return this.text(token, ctx);
-      case TokenType.SPACE:
+      case 'space':
         return this.space(token);
-      case TokenType.CODE:
+      case 'code':
         return this.code(token, ctx);
-      case TokenType.BLOCKQUOTE:
+      case 'blockquote':
         return this.blockquote(token, ctx);
       default:
         // `marked` provides much more tokens, however we don't need to go so deep.

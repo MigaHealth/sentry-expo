@@ -32,14 +32,14 @@ interface Entry {
   process.exit(1);
 });
 
-function addEntry(tokens: markdown.Tokens, entry: Entry): void {
+function addEntry(tokens: markdown.TokensList, entry: Entry): void {
   const categoryHeader = CATEGORY_HEADERS[entry.category];
 
   let i = 0;
   while (true) {
     const token = tokens[i];
     if (
-      token.type === markdown.TokenType.HEADING &&
+      token.type === 'heading' &&
       token.depth === 3 &&
       token.text === categoryHeader
     ) {
@@ -50,7 +50,7 @@ function addEntry(tokens: markdown.Tokens, entry: Entry): void {
   }
 
   // i points at the category heading
-  if (tokens[i + 1].type === markdown.TokenType.HEADING) {
+  if (tokens[i + 1].type === 'heading') {
     // no list yet
     const listToken = markdown.createListToken(0);
     const spaceToken = markdown.createSpaceToken('\n\n');

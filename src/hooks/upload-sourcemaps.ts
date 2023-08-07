@@ -1,9 +1,9 @@
-import spawnAsync from '@expo/spawn-async';
-import path from 'path';
-import rimraf from 'rimraf';
-import mkdirp from 'mkdirp';
 import fs from 'fs';
-import sentryCliBinary from '@sentry/cli';
+import path from 'path';
+import spawnAsync from '@expo/spawn-async';
+import { rimraf } from 'rimraf';
+import { mkdirp } from 'mkdirp';
+import SentryCli from '@sentry/cli';
 
 type ExpoSentryConfig = {
   organization: string;
@@ -73,7 +73,7 @@ module.exports = async (options: Options) => {
     const uploadOptions = getUploadOptions(config, process.env, iosManifest);
     await createAndUploadRelease(uploadOptions, childProcessEnv, projectRoot, tmpdir, log);
   } catch (e) {
-    log(messageForError(e));
+    log(messageForError(e as Error));
     log(
       `Verify that your Sentry configuration in app.json is correct and refer to https://docs.expo.io/versions/latest/guides/using-sentry.html`
     );
@@ -123,7 +123,7 @@ async function createAndUploadRelease(
     deployEnv,
     platform,
   } = userOptions;
-  const sentryCliBinaryPath = useGlobalSentryCli ? 'sentry-cli' : sentryCliBinary.getPath();
+  const sentryCliBinaryPath = useGlobalSentryCli ? 'sentry-cli' : SentryCli.getPath();
 
   let output;
   let createReleaseResult = await spawnAsync(sentryCliBinaryPath, ['releases', 'new', release], {
